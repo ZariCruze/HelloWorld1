@@ -1,5 +1,11 @@
 # importujemy bibliotekę requests do wysyłania zapytań HTTP
 import requests
+# json — do zapisywania i odczytywania danych w formacie JSON
+import json
+# os — do sprawdzania czy plik istnieje na dysku
+import os
+# datetime — do pobierania aktualnej daty i godziny
+from datetime import datetime
 
 # współrzędne geograficzne Piotrkowa Trybunalskiego
 LATITUDE = 51.4054
@@ -29,6 +35,28 @@ WEATHER_CODES = {
     96: "Burza z gradem lekkim",
     99: "Burza z gradem silnym",
 }
+
+# ścieżka do pliku z historią sprawdzeń pogody
+HISTORY_FILE = "weather_history.json"
+
+# --- WYŚWIETLANIE HISTORII ---
+# os.path.exists() sprawdza czy plik istnieje na dysku
+if os.path.exists(HISTORY_FILE):
+    # open() otwiera plik, "r" oznacza tryb odczytu
+    # "with" automatycznie zamyka plik po zakończeniu bloku
+    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+        # json.load() wczytuje dane JSON z pliku i zamienia na listę/słownik
+        historia = json.load(f)
+
+    # [-5:] pobiera ostatnie 5 elementów z listy (slice)
+    ostatnie = historia[-5:]
+
+    if ostatnie:
+        print("📋 Ostatnie sprawdzenia pogody:")
+        for wpis in ostatnie:
+            print(f"   {wpis['data']} — {wpis['temperatura']}°C, "
+                  f"{wpis['wilgotnosc']}%, {wpis['pogoda']}")
+        print()
 
 # budujemy URL do API open-meteo.com
 # current= określa jakie dane chcemy pobrać
@@ -63,6 +91,32 @@ try:
     print(f"🌡️  Temperatura: {temperatura}°C")
     print(f"💧 Wilgotność: {wilgotnosc}%")
     print(f"☁️  Pogoda: {opis}")
+
+    # --- ZAPISYWANIE DO HISTORII ---
+    # wczytujemy istniejącą historię lub tworzymy pustą listę
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+            historia = json.load(f)
+    else:
+        historia = []
+
+    # tworzymy nowy wpis jako słownik z danymi pogodowymi i datą
+    nowy_wpis = {
+        "data": datetime.now().strftime("%d.%m.%Y %H:%M"),
+        "temperatura": temperatura,
+        "wilgotnosc": wilgotnosc,
+        "pogoda": opis,
+    }
+
+    # append() dodaje element na koniec listy
+    historia.append(nowy_wpis)
+
+    # zapisujemy zaktualizowaną historię do pliku JSON
+    # "w" oznacza tryb zapisu (nadpisuje plik)
+    # ensure_ascii=False pozwala zapisywać polskie znaki
+    # indent=2 formatuje JSON z wcięciami dla czytelności
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(historia, f, ensure_ascii=False, indent=2)
 
 # ConnectionError — brak połączenia z internetem lub serwer niedostępny
 except requests.ConnectionError:
