@@ -38,11 +38,16 @@ url = (
     f"&current=temperature_2m,relative_humidity_2m,weather_code"
 )
 
-# requests.get() wysyła zapytanie GET do API i zwraca odpowiedź
-response = requests.get(url)
+# try/except przechwytuje błędy i pozwala na nie zareagować
+# zamiast wyświetlać techniczny komunikat, pokazujemy przyjazną wiadomość
+try:
+    # requests.get() wysyła zapytanie GET do API i zwraca odpowiedź
+    # timeout=10 oznacza, że czekamy maksymalnie 10 sekund na odpowiedź
+    response = requests.get(url, timeout=10)
 
-# sprawdzamy czy zapytanie się powiodło (kod 200 = OK)
-if response.status_code == 200:
+    # raise_for_status() wyrzuca błąd jeśli kod odpowiedzi to 4xx lub 5xx
+    response.raise_for_status()
+
     # .json() zamienia odpowiedź z formatu JSON na słownik Pythona
     dane = response.json()
     current = dane["current"]
@@ -58,5 +63,23 @@ if response.status_code == 200:
     print(f"🌡️  Temperatura: {temperatura}°C")
     print(f"💧 Wilgotność: {wilgotnosc}%")
     print(f"☁️  Pogoda: {opis}")
-else:
-    print(f"Błąd pobierania danych: {response.status_code}")
+
+# ConnectionError — brak połączenia z internetem lub serwer niedostępny
+except requests.ConnectionError:
+    print("❌ Brak połączenia z internetem. Sprawdź swoje połączenie i spróbuj ponownie.")
+
+# Timeout — serwer nie odpowiedział w wyznaczonym czasie
+except requests.Timeout:
+    print("❌ Serwer pogodowy nie odpowiada. Spróbuj ponownie za chwilę.")
+
+# HTTPError — serwer zwrócił kod błędu (np. 404, 500)
+except requests.HTTPError as e:
+    print(f"❌ Serwer pogodowy zwrócił błąd (kod {e.response.status_code}). Spróbuj ponownie później.")
+
+# ValueError/JSONDecodeError — odpowiedź nie jest poprawnym JSON-em
+except ValueError:
+    print("❌ Otrzymano nieprawidłowe dane z serwera. Spróbuj ponownie później.")
+
+# KeyError — brak oczekiwanych pól w danych (nieoczekiwany format odpowiedzi)
+except KeyError as e:
+    print(f"❌ Dane pogodowe mają nieoczekiwany format (brak pola {e}). Spróbuj ponownie później.")
