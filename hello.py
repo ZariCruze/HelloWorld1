@@ -8,6 +8,7 @@ nazwisko = input("Jak masz na nazwisko? ")
 
 # float() zamienia tekst na liczbę z miejscami po przecinku (np. "75.5" -> 75.5)
 waga = float(input("Ile ważysz (w kg)? "))
+kolor_wlosow = input("Jaki masz kolor włosów? ")
 
 # datetime.now() pobiera aktualną datę i godzinę
 # strftime() formatuje datę jako tekst, np. "12.02.2026 14:30"
@@ -22,3 +23,4 @@ print(f"Dzisiaj jest: {teraz}")
 liczba_liter = len(imie)
 print(f"Twoje imię ma {liczba_liter} liter.")
 print(f"Twoja waga to {waga} kg.")
+print(f"Kolor Twoich włosów: {kolor_wlosow}.")
